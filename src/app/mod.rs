@@ -86,7 +86,7 @@ use deadsync_input as logical_input;
 use deadsync_input::RawKeyboardEvent;
 use deadsync_input::{InputEvent, PadEvent, VirtualAction};
 use deadsync_input_fsr as fsr_input;
-use deadsync_input_native::{GpSystemEvent, PadBackend};
+use deadsync_input_native::GpSystemEvent;
 use deadsync_lights::{
     self as lights, ButtonLight, CabinetLight, HideFlags, Mode as LightMode, Player as LightPlayer,
 };
@@ -1681,6 +1681,7 @@ pub struct ShellState {
     pending_window_position: Option<PhysicalPosition<i32>>,
     gamepad_overlay_state: Option<(String, Instant)>,
     pending_exit: bool,
+    pending_shutdown: bool,
     shift_held: bool,
     ctrl_held: bool,
     alt_held: bool,
@@ -1906,6 +1907,7 @@ impl ShellState {
             pending_window_position: None,
             gamepad_overlay_state: None,
             pending_exit: false,
+            pending_shutdown: false,
             shift_held: false,
             ctrl_held: false,
             alt_held: false,
@@ -5549,6 +5551,7 @@ impl App {
                 return Ok(());
             }
             ScreenAction::Exit => self.handle_exit_action(),
+            ScreenAction::ShutdownHost => self.handle_shutdown_action(),
             ScreenAction::SelectProfiles { p1, p2 } => {
                 let fast_profile_switch = profile::take_fast_profile_switch_from_select_music();
                 let profile_data = profile::set_active_profiles(p1, p2);
@@ -10572,9 +10575,6 @@ impl ApplicationHandler<UserEvent> for App {
                             usize::from(*id),
                             backend
                         );
-                        if *backend == PadBackend::Smx {
-                            config::send_smx_underglow_color();
-                        }
                         if !*initial {
                             self.state.shell.gamepad_overlay_state = Some((
                                 format!(
@@ -10600,9 +10600,6 @@ impl ApplicationHandler<UserEvent> for App {
                             usize::from(*id),
                             backend
                         );
-                        if *backend == PadBackend::Smx {
-                            config::send_smx_underglow_color();
-                        }
                         if !*initial {
                             self.state.shell.gamepad_overlay_state = Some((
                                 format!(
